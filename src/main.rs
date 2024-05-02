@@ -1,10 +1,17 @@
-use crate::lzw::{decode, encode, tight_decode, tight_encode};
+use bitvec::bitvec;
+use bitvec::field::BitField;
+use bitvec::prelude::Lsb0;
+use bitvec::vec::BitVec;
+use crate::lzw::*;
 
 mod lzw;
 
 fn main() {
-    let x = tight_encode("TOBEORNOTTOBEORTOBEORNOT");
-    let y = tight_decode(&x);
+    println!("[ENCODE]");
+    let x = encode("TOBEORNOTTOBEORTOBEORNOT");
+
+    println!("[DECODE]");
+    let y = decode(&x);
 
     println!("{} | {}", x.to_string(), x.len());
     println!("{y}");
