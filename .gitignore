@@ -1,5 +1,5 @@
 /target
 *.7z
 *.txt
-*.bin
+*.lzw
 .idea

@@ -21,7 +21,8 @@ fn test(path: impl AsRef<Path>) -> bool {
     }
 
 
-    let result_path = path.as_ref().with_file_name(format!("result_{}", path.as_ref().file_name().unwrap().to_str().unwrap()));
+
+    let result_path = path.as_ref().with_file_name(format!("{}_result", path.as_ref().file_stem().unwrap().to_str().unwrap())).with_extension("txt");
     {
         println!("[DECODING]");
         let input = fs::read(path.as_ref().with_extension("lzw")).unwrap();
