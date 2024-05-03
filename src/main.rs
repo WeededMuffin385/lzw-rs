@@ -1,36 +1,31 @@
 use std::fs;
 use std::fs::read_to_string;
 use std::mem::size_of;
-use bitvec::bitvec;
+use std::path::{Path, PathBuf};
 use bitvec::field::BitField;
-use bitvec::prelude::Lsb0;
 use bitvec::vec::BitVec;
 use crate::lzw::*;
 
 mod lzw;
 
+fn test(path: impl AsRef<Path>) {
+    let data = fs::read(path).unwrap();
+
+    let bits = encode(&data);
+}
+
 fn main() {
-    {
-        let data = read_to_string("assets/engwiki_ascii.txt").unwrap();
-        println!("[ENCODE]");
-        let x = encode(&data);
-
-        let mut data = Vec::new();
-        for value in x.into_vec() {
-            data.extend(value.to_le_bytes());
-        }
-        fs::write("assets/encoded.bin", data).unwrap();
-    }
+    //test("assets/engwiki_ascii.txt");
+    let input = fs::read("assets/engwiki_ascii.txt").unwrap();
+    let bits = encode(&input);
+    let output = decode(&bits);
 
 
-    {
-        let mut data = Vec::new();
-        for value in fs::read("assets/encoded.bin").unwrap().chunks(size_of::<usize>()) {
-            data.push(usize::from_le_bytes(value.try_into().unwrap()));
-        }
 
-        let data = BitVec::from_vec(data);
-        let data = decode(&data);
-        println!("{data}");
-    }
+
+    if input == output {
+        println!("ok")
+    } else {
+        println!("err")
+    };
 }

@@ -1,12 +1,10 @@
 use std::collections::HashMap;
-use std::fmt::format;
 use std::io;
 use std::io::Write;
-use std::num::NonZeroUsize;
 use std::ops::Not;
 use bitvec::bitvec;
 use bitvec::field::BitField;
-use bitvec::prelude::{Lsb0, Msb0};
+use bitvec::prelude::Lsb0;
 use bitvec::slice::BitSlice;
 use bitvec::vec::BitVec;
 
@@ -18,78 +16,82 @@ fn get_len(value: usize) -> usize {
 }
 
 
-pub fn encode(data: &str) -> BitVec {
-	let mut dict: HashMap<_,_> = (0..128u8).map(|x|((x as char).to_string(), x as usize)).collect();
+pub fn encode(data: &[u8]) -> BitVec {
+	let mut dict: HashMap<_,_> = (0..=255u8).map(|x|(vec![x], x as usize)).collect();
 
 	let mut result = BitVec::new();
-	let mut s = data.chars().nth(0).unwrap().to_string();
+	let mut w = Vec::new();
 
-	for (index, c) in data[1..data.len()].chars().enumerate() {
-		let w = format!("{s}{c}");
+	for (index, &c) in data.iter().enumerate() {
+		let wc = vec![w.clone(), vec![c]].concat();
 
-		if dict.contains_key(&w) {
-			s = w;
+		if dict.contains_key(&wc) {
+			w = wc;
 		} else {
-			let sc = dict[&s];
 			let len = get_len(dict.len());
-			let bits= &BitVec::<_, Lsb0>::from_element(sc)[0..len];
+			let bits= &BitVec::<_, Lsb0>::from_element(dict[&w])[0..len];
 			result.extend_from_bitslice(bits);
 
-			// println!("{len}|{sc}|{s}|{bits}");
+			//println!("{len}|{:<3}|{}|{bits}", String::from_utf8_lossy(&w), dict[&w]);
 
-
-			dict.insert(w, dict.len());
-			s = c.to_string();
+			dict.insert(wc, dict.len());
+			w.clear();
+			w.push(c);
 		}
-
-
 		if index % 1_000_000 == 0 { println!("{:.6}%", (index as f32) / (data.len() as f32) * 100.0) };
 	}
-	let sc = dict[&s];
+
 	let len = get_len(dict.len());
-	let bits= &BitVec::<_, Lsb0>::from_element(sc)[0..len];
+	let bits= &BitVec::<_, Lsb0>::from_element(dict[&w])[0..len];
 	result.extend_from_bitslice(bits);
+	//println!("{len}|{:<3}|{}|{bits}", String::from_utf8_lossy(&w), dict[&w]);
+
 	result.extend_from_bitslice(&bitvec![0;len]);
-
-	// result.extend_from_bitslice()
-
 	result
 }
 
-pub fn decode(mut data: &BitSlice) -> String {
-	let mut dict: HashMap<_,_> = (0..128u8).map(|x|(x as usize, (x as char).to_string())).collect();
 
-	let mut result = String::new();
-	let mut s = String::new();
-
+pub fn decode(mut data: &BitSlice) -> Vec<u8> {
+	let mut dict: HashMap<_,_> = (0..=255u8).map(|x|(x as usize, vec![x])).collect();
 	let length = data.len();
 
-	loop {
+	fn get(data: &BitSlice, dict: &mut HashMap<usize, Vec<u8>>) -> usize {
 		let len = get_len(dict.len());
 		let bits = &data[0..len];
-		let k = bits.load_le();
+		bits.load_le()
+	}
 
+	let k = get(&mut data, &mut dict);
+	let mut w = dict[&k].clone();
+	let mut result = w.clone();
+
+
+	data = &data[get_len(dict.len())..];
+	//println!("{}|{}", get_len(dict.len()), k);
+
+	loop {
+		let k = get(&mut data, &mut dict);
+		//println!("{}|{}", get_len(dict.len()), k);
 		if k == 0 {break}
 
-		if dict.contains_key(&k) {
-			let w = dict[&k].clone();
-			result.push_str(&w);
-
-			if s.is_empty().not() {
-				let v = format!("{s}{}", w.chars().nth(0).unwrap());
-				dict.insert(dict.len(), v);
-			}
-
-			s = w;
+		let entry = if dict.contains_key(&k) {
+			dict[&k].clone()
+		} else if k == dict.len() {
+			let mut entry = w.clone();
+			entry.push(w[0]);
+			entry
 		} else {
-			let v = format!("{s}{}", s.chars().nth(0).unwrap());
-			result.push_str(&v);
-			dict.insert(dict.len(), v);
-		}
+			panic!("Invalid dictionary!");
+		};
 
+		result.extend_from_slice(&entry);
+		w.push(entry[0]);
+		dict.insert(dict.len(), w);
+
+		data = &data[get_len(dict.len())..];
+		w = entry;
 
 		if dict.len() % 1_000_000 == 0 {println!("{:.6}%", (length - data.len()) as f32 / (length as f32) * 100.0)}
-		data = &data[get_len(dict.len())..];
 	}
 	result
 }
