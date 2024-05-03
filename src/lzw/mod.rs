@@ -1,7 +1,4 @@
 use std::collections::HashMap;
-use std::io;
-use std::io::Write;
-use std::ops::Not;
 use bitvec::bitvec;
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
