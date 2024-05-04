@@ -11,7 +11,7 @@ use bitvec::vec::BitVec;
 fn get_len(value: usize) -> usize {
 	let log = value.ilog2();
 	let add = if 2usize.pow(log) != value {1} else {0};
-	(log + add) as usize
+	(log + add + 1) as usize
 }
 
 
