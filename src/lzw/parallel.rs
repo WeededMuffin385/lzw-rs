@@ -8,7 +8,7 @@ use bitvec::prelude::{BitSlice, BitVec};
 use rayon::ThreadPoolBuilder;
 use crate::lzw::{decode, encode};
 
-const CHUNK_SIZE_MEGABYTES: usize = 64;
+const CHUNK_SIZE_MEGABYTES: usize = 32;
 const USIZE_BIT_SIZE: usize = size_of::<usize>() * 8;
 
 pub fn encode_parallel(data: &[u8]) -> BitVec {
@@ -54,7 +54,7 @@ pub fn encode_parallel(data: &[u8]) -> BitVec {
 pub fn decode_parallel(mut data: &BitSlice) -> Vec<u8> {
 	let mut chunks = Vec::new();
 	while data.len() >= USIZE_BIT_SIZE {
-		let len = data[0..USIZE_BIT_SIZE].load_le::<usize>() as usize;
+		let len = data[0..USIZE_BIT_SIZE].load::<usize>();
 		data = &data[USIZE_BIT_SIZE..data.len()];
 		chunks.push(data[0..len].to_bitvec());
 		data = &data[len..data.len()];

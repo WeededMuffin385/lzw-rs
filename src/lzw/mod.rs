@@ -55,7 +55,7 @@ pub fn decode(mut data: &BitSlice) -> Vec<u8> {
 	fn get(data: &BitSlice, dict: &mut HashMap<usize, Vec<u8>>) -> usize {
 		let len = get_len(dict.len());
 		let bits = &data[0..len];
-		bits.load_le()
+		bits.load()
 	}
 
 	let k = get(&mut data, &mut dict);
