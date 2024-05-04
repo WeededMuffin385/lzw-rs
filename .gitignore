@@ -1,5 +1,5 @@
 /target
+/assets
 *.7z
-*.txt
-*.lzw
 .idea
+Cargo.lock

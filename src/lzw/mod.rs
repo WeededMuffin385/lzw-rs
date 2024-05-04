@@ -1,5 +1,7 @@
+pub mod parallel;
+pub mod sequential;
+
 use std::collections::HashMap;
-use bitvec::bitvec;
 use bitvec::field::BitField;
 use bitvec::prelude::Lsb0;
 use bitvec::slice::BitSlice;
@@ -35,15 +37,13 @@ pub fn encode(data: &[u8]) -> BitVec {
 			w.clear();
 			w.push(c);
 		}
-		if index % 1_000_000 == 0 { println!("{:.6}%", (index as f32) / (data.len() as f32) * 100.0) };
+		if index % 2_000_000 == 0 { println!("{:^2}|{:.6}%", get_len(dict.len()), (index as f32) / (data.len() as f32) * 100.0) };
 	}
 
 	let len = get_len(dict.len());
 	let bits= &BitVec::<_, Lsb0>::from_element(dict[&w])[0..len];
 	result.extend_from_bitslice(bits);
 	//println!("{len}|{:<3}|{}|{bits}", String::from_utf8_lossy(&w), dict[&w]);
-
-	result.extend_from_bitslice(&bitvec![0;len]);
 	result
 }
 
@@ -69,7 +69,6 @@ pub fn decode(mut data: &BitSlice) -> Vec<u8> {
 	loop {
 		let k = get(&mut data, &mut dict);
 		//println!("{}|{}", get_len(dict.len()), k);
-		if k == 0 {break}
 
 		let entry = if dict.contains_key(&k) {
 			dict[&k].clone()
@@ -88,7 +87,8 @@ pub fn decode(mut data: &BitSlice) -> Vec<u8> {
 		data = &data[get_len(dict.len())..];
 		w = entry;
 
-		if dict.len() % 1_000_000 == 0 {println!("{:.6}%", (length - data.len()) as f32 / (length as f32) * 100.0)}
+		if data.is_empty() {break}
+		if dict.len() % 1_000_000 == 0 {println!("{:^2}|{:.6}%", get_len(dict.len()), (length - data.len()) as f32 / (length as f32) * 100.0)}
 	}
 	result
 }
