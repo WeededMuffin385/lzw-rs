@@ -1,8 +1,7 @@
 use std::fs;
 use std::mem::size_of;
 use std::path::Path;
-use bitvec::field::BitField;
-use bitvec::vec::BitVec;
+use bitvec::prelude::*;
 use crate::lzw::parallel::{decode_parallel, encode_parallel};
 use crate::lzw::sequential::{decode_sequential, encode_sequential};
 
@@ -43,7 +42,7 @@ fn test_parallel(path: impl AsRef<Path>) -> bool {
     {
         println!("[ENCODING]");
         let input = fs::read(path.as_ref()).unwrap();
-        let bits = encode_parallel(&input);
+        let bits = encode_parallel(&input, 2usize.pow(20) * 48);
         let data = bits.into_vec();
         let mut result = Vec::with_capacity(data.len() * size_of::<usize>());
         for value in data { result.extend_from_slice(&value.to_le_bytes()); }

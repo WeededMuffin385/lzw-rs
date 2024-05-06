@@ -1,17 +1,12 @@
 use std::mem::size_of;
-use bitvec::field::BitField;
-use bitvec::order::Lsb0;
-use bitvec::prelude::{BitSlice, BitVec};
-use rayon::iter::IntoParallelRefIterator;
-use rayon::iter::ParallelIterator;
-use rayon::prelude::{IndexedParallelIterator, ParallelSlice};
+use rayon::prelude::*;
+use bitvec::prelude::*;
 use crate::lzw::{decode, encode};
 
-const CHUNK_SIZE_MEGABYTES: usize = 48;
 const USIZE_BIT_SIZE: usize = size_of::<usize>() * 8;
 
-pub fn encode_parallel(data: &[u8]) -> BitVec {
-	let data: Vec<_> = data.par_chunks(2usize.pow(20) * CHUNK_SIZE_MEGABYTES).map(|data|encode(data)).collect();
+pub fn encode_parallel(data: &[u8], chunk_size: usize) -> BitVec {
+	let data: Vec<_> = data.par_chunks(chunk_size).map(|data|encode(data)).collect();
 
 	let mut result = BitVec::new();
 	for value in data {
