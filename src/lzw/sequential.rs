@@ -8,15 +8,16 @@ const USIZE_BIT_SIZE: usize = size_of::<usize>() * 8;
 
 
 pub fn encode_sequential(data: &[u8]) -> BitVec {
-	let bits = encode(data);
-	let mut result = BitVec::from_element(bits.len());
-	result.extend_from_bitslice(&bits);
+	let data = encode(data);
+	let mut result = BitVec::from_element(data.len());
+	result.extend_from_bitslice(&data);
 	result
 }
 
 
 pub fn decode_sequential(mut data: &BitSlice) -> Vec<u8> {
-	let len = data[0..USIZE_BIT_SIZE].load();
-	let data = &data[USIZE_BIT_SIZE..data.len()];
-	decode(&data[0..len])
+	let (len, slice) = data.split_at(USIZE_BIT_SIZE);
+	let len = len.load();
+	let (data, _) = slice.split_at(len);
+	decode(data)
 }
