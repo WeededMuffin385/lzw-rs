@@ -17,7 +17,6 @@ pub fn encode_sequential(data: &[u8]) -> BitVec {
 
 pub fn decode_sequential(mut data: &BitSlice) -> Vec<u8> {
 	let (len, slice) = data.split_at(USIZE_BIT_SIZE);
-	let len = len.load();
-	let (data, _) = slice.split_at(len);
+	let (data, _) = slice.split_at(len.load());
 	decode(data)
 }

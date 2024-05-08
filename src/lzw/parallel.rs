@@ -24,8 +24,7 @@ pub fn decode_parallel(mut data: &BitSlice) -> Vec<u8> {
 
 	while data.len() >= USIZE_BIT_SIZE {
 		let (len, slice) = data.split_at(USIZE_BIT_SIZE);
-		let len = len.load();
-		let (chunk, slice) = slice.split_at(len);
+		let (chunk, slice) = slice.split_at(len.load());
 		chunks.push(chunk);
 		data = slice;
 	}
